@@ -1,3 +1,4 @@
+import time
 from pprint import pprint
 import configparser
 import requests
@@ -15,7 +16,6 @@ class VKphotos():
     def __init__(self, token, name, count = 5):
         self.token = token
         self.name = name
-        self.count = count
 
     def _info_vk_profiles(self):
         URL = "https://api.vk.com/method/users.get"
@@ -30,6 +30,7 @@ class VKphotos():
         return lol
 
     def get_vk_photos(self):
+        i = 0
         id_profiles = self._info_vk_profiles()
         if id_profiles['response'][0]['is_closed'] == True:
             logger.debug(f"Профиль закрыт")
@@ -37,26 +38,28 @@ class VKphotos():
         ids = id_profiles['response'][0]['id']
         # print(ids)
         likes_url = {}
-        URL = "https://api.vk.com/method/photos.get"
+        URL = "https://api.vk.com/method/photos.getAll"
         params = {
             'owner_id': ids,
             'access_token': self.token,
             'v': '5.131',
-            'album_id': 'profile',
-            'extended': '1'
+            'extended': '1',
+            'no_service_albums': '0'
         }
         new_url = requests.get(URL, params=params)
         lol = new_url.json()
         # pprint(lol)
+
         for items in lol['response']['items']:
             like_photo = int(items['likes']['count'])
             max_height = 0
             max_heinght_photos = []  # URL Фотографий для скачивания
             item_type = []
             date = datetime.utcfromtimestamp(items['date']).strftime('%Y-%m-%d-%HH-%MM-%SS')
+            i += 1
             for size in items['sizes']:
-                if int(size['height']) > max_height:
-                    max_height = size['height']
+                if int(size['height']) + int(size['width']) > max_height:
+                    max_height = size['height'] + size['width']
                     max_heinght_photos = size['url']
                     item_type = size['type']
                 else:
@@ -64,20 +67,22 @@ class VKphotos():
             if like_photo in likes_url.keys():
                 likes_url[date] = max_height, max_heinght_photos, item_type, date
             else:
-                likes_url[like_photo] = max_height, max_heinght_photos, item_type, like_photo
+                likes_url[like_photo] = max_height, max_heinght_photos, item_type, str(like_photo)
         # pprint(likes_url)
         return likes_url
+        # return
 
     def sorted_photo(self):
-        i = 0
         list = self.get_vk_photos()
         if list == None:
-            # print("Профиль закрыт фотографии не удалось скачать")
+            print("Профиль закрыт фотографии не удалось скачать")
             return
+        count = int(input('Введите число скачаевыемых фото: '))
+        i = 0
         max_height = []
         sort_like_url = {}
         for val in sorted(list.values(), reverse=True):
-            if i <= self.count - 1:
+            if i <= count - 1:
                 max_height.append(val)
                 i += 1
         for item in max_height:
@@ -122,7 +127,6 @@ class YDphotos():
             upload_query = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
             self._new_papka()
             for name, value in self.spisok.items():
-                if value[1] == "w":
                     params = {'path': f'Папка загрузки/{name}', 'url': value[0]}
                     requests.post(upload_query, headers=self._get_headers(), params=params)
                     logger.debug(f"Фотография c именем : {name} выгружена на Yandex Disk")
@@ -142,8 +146,8 @@ def seve_json(text):
 
 
 if __name__ == '__main__':
-    count = int(input('Введите число скачаевыемых фото: '))
-    vkphotos = VKphotos(config["Tokens"]["vktoken"], 'the9pasha', count)
+    # count = int(input('Введите число скачаевыемых фото: '))
+    vkphotos = VKphotos(config["Tokens"]["vktoken"], 'the9pasha')
     ydphotos = YDphotos(config["Tokens"]["ydtoken"], vkphotos.sorted_photo())
     ydphotos.upload()
 
