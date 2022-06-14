@@ -146,7 +146,6 @@ def seve_json(text):
 
 
 if __name__ == '__main__':
-    # count = int(input('Введите число скачаевыемых фото: '))
     vkphotos = VKphotos(config["Tokens"]["vktoken"], 'the9pasha')
     ydphotos = YDphotos(config["Tokens"]["ydtoken"], vkphotos.sorted_photo())
     ydphotos.upload()
