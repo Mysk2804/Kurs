@@ -39,6 +39,8 @@ class VKphotos():
             return None
         ids = id_profiles['response'][0]['id']
         count_photos = id_profiles['response'][0]['counters']['photos']
+        logger.debug(f"Страница пользователя открыта")
+        logger.debug(f"У пользователя {count_photos} фотографий")
         # print(count_photos)
         likes_url = {}
         URL = "https://api.vk.com/method/photos.getAll"
@@ -81,7 +83,7 @@ class VKphotos():
         if list == None:
             print("Профиль закрыт фотографии не удалось скачать")
             return
-        count = self.count
+        count = int(input('Введите число скачаевыемых фото: '))
         i = 0
         max_height = []
         sort_like_url = {}
@@ -151,8 +153,7 @@ def seve_json(text):
 
 
 if __name__ == '__main__':
-    count = int(input('Введите число скачаевыемых фото: '))
-    vkphotos = VKphotos(config["Tokens"]["vktoken"], 'the9pasha', count)
+    vkphotos = VKphotos(config["Tokens"]["vktoken"], 'the9pasha')
     ydphotos = YDphotos(config["Tokens"]["ydtoken"], vkphotos.sorted_photo())
     ydphotos.upload()
 
