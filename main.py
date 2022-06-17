@@ -13,16 +13,18 @@ config.read("YDtoken.ini")
 # print(config["Tokens"]["vktoken"])
 
 class VKphotos():
-    def __init__(self, token, name, count = 5):
+    def __init__(self, token, name, count=5):
         self.token = token
         self.name = name
+        self.count = count
 
     def _info_vk_profiles(self):
         URL = "https://api.vk.com/method/users.get"
         params = {
             'user_ids': self.name,
             'access_token': self.token,
-            'v': '5.131'
+            'v': '5.131',
+            'fields': 'counters'
         }
         new_url = requests.get(URL, params=params)
         lol = new_url.json()
@@ -36,7 +38,8 @@ class VKphotos():
             logger.debug(f"Профиль закрыт")
             return None
         ids = id_profiles['response'][0]['id']
-        # print(ids)
+        count_photos = id_profiles['response'][0]['counters']['photos']
+        # print(count_photos)
         likes_url = {}
         URL = "https://api.vk.com/method/photos.getAll"
         params = {
@@ -44,7 +47,8 @@ class VKphotos():
             'access_token': self.token,
             'v': '5.131',
             'extended': '1',
-            'no_service_albums': '0'
+            'no_service_albums': '0',
+            'count': '200'
         }
         new_url = requests.get(URL, params=params)
         lol = new_url.json()
@@ -68,7 +72,7 @@ class VKphotos():
                 likes_url[date] = max_height, max_heinght_photos, item_type, date
             else:
                 likes_url[like_photo] = max_height, max_heinght_photos, item_type, str(like_photo)
-        # pprint(likes_url)
+        # pprint(i)
         return likes_url
         # return
 
@@ -77,7 +81,7 @@ class VKphotos():
         if list == None:
             print("Профиль закрыт фотографии не удалось скачать")
             return
-        count = int(input('Введите число скачаевыемых фото: '))
+        count = self.count
         i = 0
         max_height = []
         sort_like_url = {}
@@ -87,6 +91,7 @@ class VKphotos():
                 i += 1
         for item in max_height:
             sort_like_url[item[3]] = item[1], item[2]
+        # print(i)
         return sort_like_url
 
 
@@ -146,7 +151,8 @@ def seve_json(text):
 
 
 if __name__ == '__main__':
-    vkphotos = VKphotos(config["Tokens"]["vktoken"], 'the9pasha')
+    count = int(input('Введите число скачаевыемых фото: '))
+    vkphotos = VKphotos(config["Tokens"]["vktoken"], 'the9pasha', count)
     ydphotos = YDphotos(config["Tokens"]["ydtoken"], vkphotos.sorted_photo())
     ydphotos.upload()
 
